@@ -124,7 +124,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
    <div class="field"><label for="amount">Valor (R$)</label><input id="amount" required type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00"></div>
    <div class="field"><label for="category">Categoria</label><select id="category"></select></div>
    <div class="field"><label for="date">Data</label><input id="date" type="date" required></div>
-   <div class="field"><label for="payment">Forma de pagamento</label><select id="payment"><option>Pix</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
+   <div class="field"><label for="payment">Forma de pagamento</label><select id="payment"><option>Pix</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Dinheiro</option><option>Transferência</option><option>Outro</option></select></div>
    <div class="field" id="cardField" style="display:none"><label for="card">Qual cartão?</label><select id="card"><option value="Roxo">🟣 Cartão roxo</option><option value="Laranja">🟠 Cartão laranja</option><option value="Preto">⚫ Cartão preto</option></select></div>
    <button class="primary" type="submit">Salvar lançamento</button>
   </form>
@@ -139,7 +139,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
    <div class="field"><label for="billAmount">Valor previsto (R$)</label><input id="billAmount" required type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00"></div>
    <div class="field"><label for="billCategory">Categoria</label><select id="billCategory"></select></div>
    <div class="field"><label for="billDueDay">Dia do vencimento</label><input id="billDueDay" required type="number" min="1" max="31" value="10" onchange="if(Number(this.value)===23)document.getElementById('billPayment').value='Limite bancário'"></div>
-   <div class="field"><label for="billPayment">Forma habitual de pagamento</label><select id="billPayment"><option>Pix</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Transferência</option><option>Limite bancário</option><option>Outro</option></select></div>
+   <div class="field"><label for="billPayment">Forma habitual de pagamento</label><select id="billPayment"><option>Pix</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Dinheiro</option><option>Transferência</option><option>Limite bancário</option><option>Outro</option></select></div>
+   <div class="field" id="billCardField" style="display:none"><label for="billCard">Qual cartão?</label><select id="billCard"><option value="Roxo">🟣 Cartão roxo</option><option value="Laranja">🟠 Cartão laranja</option><option value="Preto">⚫ Cartão preto</option></select></div>
    <button class="primary" type="submit">Salvar conta fixa</button>
    <button class="secondary" type="button" onclick="closeBillModal()">Cancelar</button>
   </form>
@@ -161,7 +162,7 @@ function getBillRecord(id,month){return billRecords[billRecordKey(id,month)]||{}
 function billDueDate(day,month){const [y,m]=month.split('-').map(Number);const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(Number(day),last)).padStart(2,'0')}`}
 function billsForMonth(month=monthKey(current)){return billTemplates.filter(b=>b.active!==false).map(b=>{const rec=getBillRecord(b.id,month);return {...b,month,amount:rec.amountOverride??b.amount,paid:!!rec.paid,paidDate:rec.paidDate||'',dueDate:billDueDate(b.dueDay,month),record:rec}})}
 function billTotalsForMonth(month=monthKey(current)){const bs=billsForMonth(month);return {total:bs.reduce((s,b)=>s+Number(b.amount),0),paid:bs.filter(b=>b.paid).reduce((s,b)=>s+Number(b.amount),0),pending:bs.filter(b=>!b.paid).reduce((s,b)=>s+Number(b.amount),0),bills:bs}}
-function billExpensesForMonth(month=monthKey(current)){return billsForMonth(month).filter(b=>b.paid).map(b=>({id:'fixed_'+b.id+'_'+month,type:'expense',description:b.name,amount:Number(b.amount),category:b.category,date:b.paidDate||b.dueDate,payment:b.record.payment||b.payment||'',fixedBill:true,created:0}))}
+function billExpensesForMonth(month=monthKey(current)){return billsForMonth(month).filter(b=>b.paid).map(b=>({id:'fixed_'+b.id+'_'+month,type:'expense',description:b.name,amount:Number(b.amount),category:b.category,date:b.paidDate||b.dueDate,payment:b.record.payment||b.payment||'',card:b.record.card||b.card||'',fixedBill:true,created:0}))}
 function cycleWindowBills(month=monthKey(current)){const bs=billsForMonth(month);return {salary:bs.filter(b=>Number(b.dueDay)>=23&&Number(b.dueDay)<=30),rest:bs.filter(b=>Number(b.dueDay)<23||Number(b.dueDay)>30)}}
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
 function save(){localStorage.setItem(KEY,JSON.stringify(entries));saveBills();render()}
@@ -211,7 +212,8 @@ function billItemHTML(b){
  const isBridge=Number(b.dueDay)===23;
  const status=b.paid?`<span class="status-pill status-paid">✓ Paga${b.paidDate?' em '+fmtDate(b.paidDate):''}</span>`:`<span class="status-pill status-pending">Pendente</span>`;
  const bridge=isBridge?'<div class="status-pill status-bridge">Dia 23 · antecipação no limite bancário — cobrir no salário do dia 25</div>':'';
- return `<div class="bill-item"><div class="bill-top"><div class="bill-main"><b>${esc(b.name)}</b><div class="bill-meta">${esc(b.category)} · Vencimento dia ${b.dueDay} · ${esc(b.payment||'')}</div>${status}${bridge}</div><div class="bill-amount">${money(b.amount)}</div></div><div class="bill-actions"><button class="${b.paid?'secondary':'primary'}" onclick="toggleBillPaid('${b.id}','${b.month}')">${b.paid?'Desmarcar pagamento':'Marcar como paga'}</button><button class="secondary" onclick="adjustBillAmount('${b.id}','${b.month}')">Ajustar valor</button><button class="secondary" onclick="editBillTemplate('${b.id}')">Editar cadastro</button></div></div>`;
+ const cardTag=b.payment==='Crédito'&&b.card?`<br><span class="card-pill ${cardClass(b.card)}">${b.card==='Roxo'?'🟣':b.card==='Laranja'?'🟠':'⚫'} Cartão ${b.card.toLowerCase()}</span>`:'';
+ return `<div class="bill-item"><div class="bill-top"><div class="bill-main"><b>${esc(b.name)}</b><div class="bill-meta">${esc(b.category)} · Vencimento dia ${b.dueDay} · ${esc(b.payment||'')}</div>${cardTag}${status}${bridge}</div><div class="bill-amount">${money(b.amount)}</div></div><div class="bill-actions"><button class="${b.paid?'secondary':'primary'}" onclick="toggleBillPaid('${b.id}','${b.month}')">${b.paid?'Desmarcar pagamento':'Marcar como paga'}</button><button class="secondary" onclick="adjustBillAmount('${b.id}','${b.month}')">Ajustar valor</button><button class="secondary" onclick="editBillTemplate('${b.id}')">Editar cadastro</button></div></div>`;
 }
 function renderBills(){
  const month=monthKey(current), data=billTotalsForMonth(month), sorted=[...data.bills].sort((a,b)=>Number(a.dueDay)-Number(b.dueDay));
@@ -242,17 +244,21 @@ function openBillModal(id=null){
  document.getElementById('billAmount').value=b?.amount??'';
  document.getElementById('billDueDay').value=b?.dueDay??10;
  document.getElementById('billPayment').value=b?.payment||(Number(b?.dueDay||10)===23?'Limite bancário':'Pix');
+ document.getElementById('billCard').value=b?.card||'Roxo';
+ updateBillCardField();
  document.getElementById('billCategory').innerHTML=cats.expense.map(c=>`<option>${esc(c)}</option>`).join('');
  document.getElementById('billCategory').value=b?.category||'Contas';
  document.getElementById('billModal').classList.add('show');
 }
+function updateBillCardField(){document.getElementById('billCardField').style.display=document.getElementById('billPayment').value==='Crédito'?'block':'none'}
+document.getElementById('billPayment').addEventListener('change',updateBillCardField);
 function closeBillModal(){document.getElementById('billModal').classList.remove('show')}
 function editBillTemplate(id){openBillModal(id)}
 document.getElementById('billForm').onsubmit=e=>{
  e.preventDefault();
  const name=document.getElementById('billName').value.trim(),amount=Number(document.getElementById('billAmount').value),dueDay=Number(document.getElementById('billDueDay').value);
  if(!name||!amount||dueDay<1||dueDay>31)return alert('Confira o nome, valor e dia de vencimento.');
- const obj={id:editingBillId||('bill_'+Date.now()),name,amount,category:document.getElementById('billCategory').value,dueDay,payment:document.getElementById('billPayment').value,active:true};
+ const obj={id:editingBillId||('bill_'+Date.now()),name,amount,category:document.getElementById('billCategory').value,dueDay,payment:document.getElementById('billPayment').value,card:document.getElementById('billPayment').value==='Crédito'?document.getElementById('billCard').value:'',active:true};
  if(editingBillId)billTemplates=billTemplates.map(x=>x.id===editingBillId?obj:x);else billTemplates.push(obj);
  saveBills();closeBillModal();render();
 };
@@ -263,7 +269,7 @@ function toggleBillPaid(id,month){
   const d=prompt('Data em que pagou (AAAA-MM-DD):',new Date().toISOString().slice(0,10));
   if(d===null)return;
   if(d&&!/^\d{4}-\d{2}-\d{2}$/.test(d))return alert('Use o formato AAAA-MM-DD.');
-  billRecords[key]={...rec,paid:true,paidDate:d||new Date().toISOString().slice(0,10),payment:rec.payment||b?.payment||'Pix'};
+  billRecords[key]={...rec,paid:true,paidDate:d||new Date().toISOString().slice(0,10),payment:rec.payment||b?.payment||'Pix',card:rec.card||b?.card||''};
  }else{
   if(!confirm('Deseja voltar esta conta para pendente?'))return;
   billRecords[key]={...rec,paid:false,paidDate:''};
@@ -293,7 +299,7 @@ function cardClass(card){return card==='Roxo'?'card-purple':card==='Laranja'?'ca
 function cardColor(card){return card==='Roxo'?'#8755c7':card==='Laranja'?'#e58a2b':'#252b33'}
 function openModal(){document.getElementById('modal').classList.add('show');document.getElementById('date').value=new Date().toISOString().slice(0,10);updateCats();updateCardField()}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
-document.getElementById('addBtn').onclick=openModal;document.getElementById('closeModal').onclick=closeModal;
+document.getElementById('addBtn').onclick=openModal;document.getElementById('closeModal').onclick=closeModal;document.getElementById('payment').addEventListener('change',updateCardField);
 document.getElementById('payment').addEventListener('change',updateCardField);
 document.querySelectorAll('.type-switch button').forEach(b=>b.onclick=()=>{type=b.dataset.type;document.querySelectorAll('.type-switch button').forEach(x=>x.classList.toggle('selected',x===b));updateCats()});
 document.getElementById('entryForm').onsubmit=e=>{e.preventDefault();entries.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),type,description:document.getElementById('description').value.trim(),amount:Number(document.getElementById('amount').value),category:document.getElementById('category').value,date:document.getElementById('date').value,payment:document.getElementById('payment').value,card:document.getElementById('payment').value==='Crédito'?document.getElementById('card').value:'',created:Date.now()});save();e.target.reset();closeModal()};
