@@ -28,6 +28,20 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
 .card-pill{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:750;margin-top:4px}.card-purple{background:#f0e8ff;color:#7542b8}.card-orange{background:#fff0df;color:#b96612}.card-black{background:#e9ecef;color:#202832}.card-summary-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.card-summary-row:last-child{border:0}.card-swatch{width:12px;height:12px;border-radius:4px;flex-shrink:0}.card-summary-row .card-label{flex:1;font-size:13px;font-weight:650}.card-summary-row strong{font-size:13px}.empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 8px}.settings-row{padding:15px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.settings-row:last-child{border:0}.settings-row b{font-size:13px}.settings-row small{display:block;color:var(--muted);margin-top:4px;font-size:11px}
 .modal{position:fixed;inset:0;background:#071a2bb0;display:none;align-items:flex-end;z-index:10}.modal.show{display:flex}.sheet{background:var(--bg);width:100%;max-width:620px;margin:auto auto 0;border-radius:24px 24px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.sheet-head h2{margin:0;font-size:19px}.close{border:0;background:#e8edf1;border-radius:50%;width:32px;height:32px;font-size:18px}
 @media(min-width:700px){body{padding-bottom:30px}.top{border-radius:0 0 30px 30px}.fab{right:max(24px,calc((100vw - 620px)/2))}nav{position:static;max-width:620px;margin:15px auto;border-radius:18px;border:1px solid var(--line)}}
+
+.salary-cycle{background:linear-gradient(135deg,#102b46,#1d4968);color:#fff;border-radius:19px;padding:17px;box-shadow:var(--shadow)}
+.salary-cycle h3{font-size:15px;margin:0 0 7px}.salary-cycle p{font-size:12px;line-height:1.5;opacity:.85;margin:0}
+.cycle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.cycle-stat{background:#ffffff18;border:1px solid #ffffff20;border-radius:12px;padding:10px}.cycle-stat small{display:block;font-size:10px;opacity:.78}.cycle-stat b{display:block;font-size:13px;margin-top:5px}
+.cycle-note{margin-top:12px;padding:10px 11px;background:#ffffff15;border-radius:11px;font-size:11px;line-height:1.45}
+.bill-group{margin:14px 0 18px}.bill-group h3{font-size:14px;margin:0 0 8px}.bill-item{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;margin:9px 0;box-shadow:0 3px 12px rgba(16,43,70,.04)}
+.bill-top{display:flex;align-items:flex-start;gap:9px}.bill-main{flex:1;min-width:0}.bill-main b{font-size:13px;display:block}.bill-meta{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}
+.bill-amount{font-size:14px;font-weight:800;white-space:nowrap}.bill-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.bill-actions button{font-size:11px;padding:8px 10px}
+.status-pill{font-size:10px;font-weight:800;border-radius:99px;padding:5px 8px;display:inline-block;margin-top:6px}.status-paid{background:#e5f7ee;color:#14845d}.status-pending{background:#fff2dc;color:#a56612}.status-bridge{background:#eee8ff;color:#6842a3}
+.bill-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.bill-total{background:#f5f8fa;border-radius:12px;padding:11px}.bill-total small{display:block;color:var(--muted);font-size:10px}.bill-total b{display:block;font-size:13px;margin-top:5px}
+.bill-empty{padding:22px 10px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:370px){.cycle-grid{gap:5px}.cycle-stat{padding:8px}.cycle-stat b{font-size:11px}.bill-totals{gap:5px}.bill-total{padding:8px}.bill-total b{font-size:11px}}
+
 </style>
 </head>
 <body>
@@ -39,6 +53,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
 <main>
 <section class="view active" id="homeView">
  <div class="section-head"><h2>Visão geral</h2><span class="small">Resumo do mês</span></div>
+ <div class="section-head"><h2>Seu ciclo salarial</h2><span class="small">Salário dia 25</span></div>
+ <div class="salary-cycle" id="salaryCycleSummary"></div>
+ <div class="section-head"><h2>Contas fixas</h2><button class="small" style="border:0;background:none;color:var(--navy)" onclick="showView('bills')">Gerenciar ›</button></div>
+ <div class="panel" id="homeBillsSummary"><div class="empty">Cadastre suas contas fixas para acompanhar vencimentos e pagamentos.</div></div>
  <div class="cards">
   <div class="metric"><div class="label">↗ Receitas</div><div class="value positive" id="incomeTotal">R$ 0,00</div><div class="hint">Entradas registradas</div></div>
   <div class="metric"><div class="label">↘ Despesas</div><div class="value negative" id="expenseTotal">R$ 0,00</div><div class="hint">Saídas registradas</div></div>
@@ -52,6 +70,18 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
  <div class="panel" id="cardSummary"><div class="empty">Registre uma compra no crédito para acompanhar cada cartão.</div></div>
  <div class="section-head"><h2>Últimos lançamentos</h2><button class="small" style="border:0;background:none;color:var(--navy)" onclick="showView('transactions')">Ver todos ›</button></div>
  <div class="panel" id="recentList"><div class="empty">Nenhum lançamento neste mês.</div></div>
+</section>
+
+<section class="view" id="billsView">
+ <div class="section-head"><h2>Contas fixas</h2><span class="small">Cadastro e pagamentos</span></div>
+ <div class="panel">
+  <p class="small" style="line-height:1.5;margin:0 0 12px">Cadastre cada conta uma vez. Todo mês ela aparecerá no controle para você ajustar o valor e marcar quando pagar.</p>
+  <button class="primary" style="width:100%" onclick="openBillModal()">＋ Cadastrar conta fixa</button>
+ </div>
+ <div class="section-head"><h2>Resumo do mês</h2><span class="small" id="billMonthLabel"></span></div>
+ <div class="bill-totals" id="billTotals"></div>
+ <div class="panel" id="billList"><div class="bill-empty">Nenhuma conta fixa cadastrada.</div></div>
+ <p class="small" style="line-height:1.55;margin:13px 4px">A conta com vencimento no dia 23 será destacada como antecipação pelo limite bancário, para lembrar de cobri-la quando o salário entrar no dia 25.</p>
 </section>
 <section class="view" id="transactionsView">
  <div class="section-head"><h2>Lançamentos</h2><span class="small" id="txCount">0 registros</span></div>
@@ -68,6 +98,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
   <div class="settings-row"><div><b>Backup dos dados</b><small>Salve uma cópia no app Arquivos do iPhone.</small></div><button class="secondary" onclick="backupData()">Exportar</button></div>
   <div class="settings-row"><div><b>Restaurar backup</b><small>Importe um arquivo de backup anterior.</small></div><button class="secondary" onclick="document.getElementById('restoreFile').click()">Importar</button></div>
   <div class="settings-row"><div><b>Exportar planilha</b><small>Baixe os lançamentos em formato CSV, compatível com Excel.</small></div><button class="secondary" onclick="exportCSV()">Exportar</button></div>
+
+  <div class="settings-row"><div><b>Dia do salário</b><small>Dia em que o salário costuma entrar.</small></div><select id="salaryDay" onchange="saveSalaryDay()" style="border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff;color:var(--navy)"><option value="25">Dia 25</option><option value="1">Dia 1</option><option value="5">Dia 5</option><option value="10">Dia 10</option><option value="15">Dia 15</option></select></div>
   <div class="settings-row"><div><b>Armazenamento</b><small>Os dados ficam somente neste aparelho, neste navegador.</small></div><span style="color:var(--green);font-size:12px;font-weight:700">● Local</span></div>
   <div class="settings-row"><div><b>Apagar todos os dados</b><small>Esta ação não poderá ser desfeita sem backup.</small></div><button class="secondary" style="color:var(--red)" onclick="clearData()">Apagar</button></div>
  </div>
@@ -79,6 +111,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
 <nav>
  <button class="navbtn active" data-view="home"><span class="ico">⌂</span>Início</button>
  <button class="navbtn" data-view="transactions"><span class="ico">⇄</span>Lançamentos</button>
+ <button class="navbtn" data-view="bills"><span class="ico">▣</span>Contas</button>
  <button class="navbtn" data-view="reports"><span class="ico">▥</span>Relatórios</button>
  <button class="navbtn" data-view="settings"><span class="ico">⚙</span>Ajustes</button>
 </nav>
@@ -97,13 +130,41 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:
   </form>
  </div>
 </div>
+
+<div class="modal" id="billModal">
+ <div class="sheet">
+  <div class="sheet-head"><h2 id="billModalTitle">Cadastrar conta fixa</h2><button class="close" onclick="closeBillModal()">×</button></div>
+  <form class="form-card" id="billForm">
+   <div class="field"><label for="billName">Nome da conta</label><input id="billName" required maxlength="70" placeholder="Ex.: Energia elétrica"></div>
+   <div class="field"><label for="billAmount">Valor previsto (R$)</label><input id="billAmount" required type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+   <div class="field"><label for="billCategory">Categoria</label><select id="billCategory"></select></div>
+   <div class="field"><label for="billDueDay">Dia do vencimento</label><input id="billDueDay" required type="number" min="1" max="31" value="10" onchange="if(Number(this.value)===23)document.getElementById('billPayment').value='Limite bancário'"></div>
+   <div class="field"><label for="billPayment">Forma habitual de pagamento</label><select id="billPayment"><option>Pix</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Transferência</option><option>Limite bancário</option><option>Outro</option></select></div>
+   <button class="primary" type="submit">Salvar conta fixa</button>
+   <button class="secondary" type="button" onclick="closeBillModal()">Cancelar</button>
+  </form>
+ </div>
+</div>
 <script>
 const KEY='financas_casal_v1';
+const BILLS_KEY='financas_casal_fixed_bills_v1';
+const BILL_RECORDS_KEY='financas_casal_bill_records_v1';
+const PREFS_KEY='financas_casal_prefs_v1';
 const colors=['#20a477','#f0a34a','#5b8def','#9b7bd5','#e16d83','#54b6c2','#8b9aa6','#c4a15a'];
 const cats={expense:['Alimentação','Moradia','Transporte','Saúde','Educação','Lazer','Compras','Contas','Cartão de crédito','Outros'],income:['Salário','Renda extra','Investimentos','Reembolso','Outros']};
 let entries=load(), current=new Date(), type='expense';
+let billTemplates=loadJSON(BILLS_KEY,[]), billRecords=loadJSON(BILL_RECORDS_KEY,{}), prefs=loadJSON(PREFS_KEY,{salaryDay:25}), editingBillId=null;
+function loadJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k))??fallback}catch(e){return fallback}}
+function saveBills(){localStorage.setItem(BILLS_KEY,JSON.stringify(billTemplates));localStorage.setItem(BILL_RECORDS_KEY,JSON.stringify(billRecords));localStorage.setItem(PREFS_KEY,JSON.stringify(prefs))}
+function billRecordKey(id,month){return id+'_'+month}
+function getBillRecord(id,month){return billRecords[billRecordKey(id,month)]||{}}
+function billDueDate(day,month){const [y,m]=month.split('-').map(Number);const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(Number(day),last)).padStart(2,'0')}`}
+function billsForMonth(month=monthKey(current)){return billTemplates.filter(b=>b.active!==false).map(b=>{const rec=getBillRecord(b.id,month);return {...b,month,amount:rec.amountOverride??b.amount,paid:!!rec.paid,paidDate:rec.paidDate||'',dueDate:billDueDate(b.dueDay,month),record:rec}})}
+function billTotalsForMonth(month=monthKey(current)){const bs=billsForMonth(month);return {total:bs.reduce((s,b)=>s+Number(b.amount),0),paid:bs.filter(b=>b.paid).reduce((s,b)=>s+Number(b.amount),0),pending:bs.filter(b=>!b.paid).reduce((s,b)=>s+Number(b.amount),0),bills:bs}}
+function billExpensesForMonth(month=monthKey(current)){return billsForMonth(month).filter(b=>b.paid).map(b=>({id:'fixed_'+b.id+'_'+month,type:'expense',description:b.name,amount:Number(b.amount),category:b.category,date:b.paidDate||b.dueDate,payment:b.record.payment||b.payment||'',fixedBill:true,created:0}))}
+function cycleWindowBills(month=monthKey(current)){const bs=billsForMonth(month);return {salary:bs.filter(b=>Number(b.dueDay)>=23&&Number(b.dueDay)<=30),rest:bs.filter(b=>Number(b.dueDay)<23||Number(b.dueDay)>30)}}
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
-function save(){localStorage.setItem(KEY,JSON.stringify(entries));render()}
+function save(){localStorage.setItem(KEY,JSON.stringify(entries));saveBills();render()}
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const monthKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 const selected=()=>entries.filter(x=>x.date.startsWith(monthKey(current)));
@@ -111,7 +172,7 @@ const fmtDate=s=>new Date(s+'T12:00:00').toLocaleDateString('pt-BR');
 function totals(list){return list.reduce((a,x)=>(a[x.type]+=Number(x.amount),a),{income:0,expense:0})}
 function render(){
  document.getElementById('monthLabel').textContent=current.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());
- const list=selected(), t=totals(list), balance=t.income-t.expense;
+ const list=[...selected(),...billExpensesForMonth()], t=totals(list), balance=t.income-t.expense;
  document.getElementById('incomeTotal').textContent=money(t.income);document.getElementById('expenseTotal').textContent=money(t.expense);document.getElementById('balanceTotal').textContent=money(balance);
  document.getElementById('balanceTotal').style.color=balance>=0?'var(--green)':'var(--red)';
  document.getElementById('balanceHint').textContent=t.income?`${Math.max(0,Math.round(balance/t.income*100))}% da receita permaneceu disponível`:'Receitas menos despesas';
@@ -126,17 +187,105 @@ function render(){
  const cardNames=['Roxo','Laranja','Preto'];
  const cardTotals=cardNames.map(card=>({card,total:list.filter(x=>x.type==='expense'&&x.payment==='Crédito'&&x.card===card).reduce((s,x)=>s+Number(x.amount),0)}));
  document.getElementById('cardSummary').innerHTML=cardTotals.map(c=>`<div class="card-summary-row"><i class="card-swatch" style="background:${cardColor(c.card)}"></i><span class="card-label">Cartão ${c.card.toLowerCase()}</span><strong>${money(c.total)}</strong></div>`).join('');
- const recent=[...list].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+ const recent=[...list].sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
  document.getElementById('recentList').innerHTML=recent.length?recent.slice(0,5).map(txHTML).join(''):'<div class="empty">Nenhum lançamento neste mês.</div>';
  document.getElementById('allList').innerHTML=recent.length?recent.map(txHTML).join(''):'<div class="empty">Nenhum lançamento ainda.</div>';
  document.getElementById('txCount').textContent=`${list.length} registros`;
  document.getElementById('reportSummary').innerHTML=`Receitas: <b class="positive">${money(t.income)}</b><br>Despesas: <b class="negative">${money(t.expense)}</b><br>Saldo: <b style="color:${balance>=0?'var(--green)':'var(--red)'}">${money(balance)}</b><br>Comprometimento da renda: <b>${t.income?Math.round(t.expense/t.income*100):0}%</b>`;
  document.getElementById('reportCategories').innerHTML=bars||'<div class="empty">Sem dados para este período.</div>';
+ renderSalaryCycle();
+ renderHomeBills();
+ renderBills();
 }
-function txHTML(x){const cardTag=x.payment==='Crédito'&&x.card?`<br><span class="card-pill ${cardClass(x.card)}">${x.card==='Roxo'?'🟣':x.card==='Laranja'?'🟠':'⚫'} Cartão ${x.card.toLowerCase()}</span>`:'';return `<div class="transaction"><div class="tx-icon">${x.type==='income'?'↗':iconFor(x.category)}</div><div class="tx-main"><b>${esc(x.description)}</b><small>${esc(x.category)} · ${fmtDate(x.date)} · ${esc(x.payment||'')}</small>${cardTag}</div><div class="tx-value ${x.type==='income'?'positive':'negative'}">${x.type==='income'?'+':'−'} ${money(x.amount)}<br><button onclick="removeEntry('${x.id}')" style="border:0;background:none;color:#9aa7b1;font-size:10px;padding:4px 0">Excluir</button></div></div>`}
+function txHTML(x){const cardTag=x.payment==='Crédito'&&x.card?`<br><span class="card-pill ${cardClass(x.card)}">${x.card==='Roxo'?'🟣':x.card==='Laranja'?'🟠':'⚫'} Cartão ${x.card.toLowerCase()}</span>`:'';const fixedTag=x.fixedBill?'<br><span class="small" style="color:#14845d">Conta fixa paga</span>':'';const remove=x.fixedBill?'':`<br><button onclick="removeEntry('${x.id}')" style="border:0;background:none;color:#9aa7b1;font-size:10px;padding:4px 0">Excluir</button>`;return `<div class="transaction"><div class="tx-icon">${x.type==='income'?'↗':iconFor(x.category)}</div><div class="tx-main"><b>${esc(x.description)}</b><small>${esc(x.category)} · ${fmtDate(x.date)} · ${esc(x.payment||'')}</small>${cardTag}${fixedTag}</div><div class="tx-value ${x.type==='income'?'positive':'negative'}">${x.type==='income'?'+':'−'} ${money(x.amount)}${remove}</div></div>`}
+
+function renderSalaryCycle(){
+ const month=monthKey(current), t=billTotalsForMonth(month), groups=cycleWindowBills(month), salaryDay=Number(prefs.salaryDay||25);
+ const bridge=groups.salary.filter(b=>Number(b.dueDay)===23); const salaryReceived=entries.filter(x=>x.type==='income'&&x.category==='Salário'&&x.date.startsWith(month)&&Number(x.date.slice(8,10))===salaryDay).reduce((sum,x)=>sum+Number(x.amount),0);
+ const after=groups.salary.filter(b=>Number(b.dueDay)>=24);
+ const salaryText=`Salário previsto para o dia ${salaryDay}`;
+ const bridgeText=bridge.length?`Atenção: ${bridge.length} conta(s) com vencimento dia 23 podem ser pagas com o limite bancário e cobertas quando o salário entrar no dia ${salaryDay}.`:'As contas com vencimento entre os dias 23 e 30 ficam agrupadas na virada do salário.';
+ document.getElementById('salaryCycleSummary').innerHTML=`<h3>${salaryText}</h3><p>Organização do ciclo: primeiro a virada do salário, depois as contas do restante do mês. Salário lançado no dia ${salaryDay}: <b>${money(salaryReceived)}</b>.</p><div class="cycle-grid"><div class="cycle-stat"><small>Contas pagas</small><b>${money(t.paid)}</b></div><div class="cycle-stat"><small>Em aberto</small><b>${money(t.pending)}</b></div><div class="cycle-stat"><small>Total fixo</small><b>${money(t.total)}</b></div></div><div class="cycle-note">${esc(bridgeText)} ${after.length?`${after.length} conta(s) entre os dias 24 e 30 também estão neste grupo.`:''}</div>`;
+}
+function billItemHTML(b){
+ const isBridge=Number(b.dueDay)===23;
+ const status=b.paid?`<span class="status-pill status-paid">✓ Paga${b.paidDate?' em '+fmtDate(b.paidDate):''}</span>`:`<span class="status-pill status-pending">Pendente</span>`;
+ const bridge=isBridge?'<div class="status-pill status-bridge">Dia 23 · antecipação no limite bancário — cobrir no salário do dia 25</div>':'';
+ return `<div class="bill-item"><div class="bill-top"><div class="bill-main"><b>${esc(b.name)}</b><div class="bill-meta">${esc(b.category)} · Vencimento dia ${b.dueDay} · ${esc(b.payment||'')}</div>${status}${bridge}</div><div class="bill-amount">${money(b.amount)}</div></div><div class="bill-actions"><button class="${b.paid?'secondary':'primary'}" onclick="toggleBillPaid('${b.id}','${b.month}')">${b.paid?'Desmarcar pagamento':'Marcar como paga'}</button><button class="secondary" onclick="adjustBillAmount('${b.id}','${b.month}')">Ajustar valor</button><button class="secondary" onclick="editBillTemplate('${b.id}')">Editar cadastro</button></div></div>`;
+}
+function renderBills(){
+ const month=monthKey(current), data=billTotalsForMonth(month), sorted=[...data.bills].sort((a,b)=>Number(a.dueDay)-Number(b.dueDay));
+ const early=sorted.filter(b=>Number(b.dueDay)>=23&&Number(b.dueDay)<=30);
+ const rest=sorted.filter(b=>!(Number(b.dueDay)>=23&&Number(b.dueDay)<=30));
+ const label=current.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ const lbl=document.getElementById('billMonthLabel'); if(lbl)lbl.textContent=label;
+ const totals=document.getElementById('billTotals');
+ if(totals)totals.innerHTML=`<div class="bill-total"><small>Total previsto</small><b>${money(data.total)}</b></div><div class="bill-total"><small>Já pago</small><b class="positive">${money(data.paid)}</b></div><div class="bill-total"><small>Falta pagar</small><b class="negative">${money(data.pending)}</b></div>`;
+ const list=document.getElementById('billList');
+ if(!list)return;
+ if(!sorted.length){list.innerHTML='<div class="bill-empty">Nenhuma conta fixa cadastrada. Toque em “Cadastrar conta fixa” para começar.</div>';return}
+ list.innerHTML=`<div class="bill-group"><h3>Virada do salário · dias 23 a 30</h3>${early.length?early.map(billItemHTML).join(''):'<div class="bill-empty">Nenhuma conta neste período.</div>'}</div><div class="bill-group"><h3>Durante o mês · dias 1 a 22</h3>${rest.length?rest.map(billItemHTML).join(''):'<div class="bill-empty">Nenhuma conta neste período.</div>'}</div>`;
+}
+function renderHomeBills(){
+ const data=billTotalsForMonth(), list=document.getElementById('homeBillsSummary');
+ if(!list)return;
+ if(!data.bills.length){list.innerHTML='<div class="empty">Cadastre suas contas fixas para acompanhar vencimentos e pagamentos.</div>';return}
+ const pending=data.bills.filter(b=>!b.paid).sort((a,b)=>Number(a.dueDay)-Number(b.dueDay));
+ const paid=data.bills.length-pending.length;
+ list.innerHTML=`<div class="bill-totals"><div class="bill-total"><small>Pago</small><b class="positive">${money(data.paid)}</b></div><div class="bill-total"><small>Pendente</small><b class="negative">${money(data.pending)}</b></div><div class="bill-total"><small>Contas pagas</small><b>${paid}/${data.bills.length}</b></div></div>${pending.slice(0,3).map(b=>`<div class="card-summary-row"><span class="card-label">${esc(b.name)} · dia ${b.dueDay}</span><strong>${money(b.amount)}</strong></div>`).join('')}${pending.length>3?`<div class="small" style="margin-top:8px">+ ${pending.length-3} conta(s) pendente(s)</div>`:''}<button class="secondary" style="width:100%;margin-top:12px" onclick="showView('bills')">Abrir contas fixas</button>`;
+}
+function openBillModal(id=null){
+ editingBillId=id;
+ const b=id?billTemplates.find(x=>x.id===id):null;
+ document.getElementById('billModalTitle').textContent=b?'Editar conta fixa':'Cadastrar conta fixa';
+ document.getElementById('billName').value=b?.name||'';
+ document.getElementById('billAmount').value=b?.amount??'';
+ document.getElementById('billDueDay').value=b?.dueDay??10;
+ document.getElementById('billPayment').value=b?.payment||(Number(b?.dueDay||10)===23?'Limite bancário':'Pix');
+ document.getElementById('billCategory').innerHTML=cats.expense.map(c=>`<option>${esc(c)}</option>`).join('');
+ document.getElementById('billCategory').value=b?.category||'Contas';
+ document.getElementById('billModal').classList.add('show');
+}
+function closeBillModal(){document.getElementById('billModal').classList.remove('show')}
+function editBillTemplate(id){openBillModal(id)}
+document.getElementById('billForm').onsubmit=e=>{
+ e.preventDefault();
+ const name=document.getElementById('billName').value.trim(),amount=Number(document.getElementById('billAmount').value),dueDay=Number(document.getElementById('billDueDay').value);
+ if(!name||!amount||dueDay<1||dueDay>31)return alert('Confira o nome, valor e dia de vencimento.');
+ const obj={id:editingBillId||('bill_'+Date.now()),name,amount,category:document.getElementById('billCategory').value,dueDay,payment:document.getElementById('billPayment').value,active:true};
+ if(editingBillId)billTemplates=billTemplates.map(x=>x.id===editingBillId?obj:x);else billTemplates.push(obj);
+ saveBills();closeBillModal();render();
+};
+function toggleBillPaid(id,month){
+ const key=billRecordKey(id,month),rec=billRecords[key]||{},wasPaid=!!rec.paid;
+ if(!wasPaid){
+  const b=billsForMonth(month).find(x=>x.id===id);
+  const d=prompt('Data em que pagou (AAAA-MM-DD):',new Date().toISOString().slice(0,10));
+  if(d===null)return;
+  if(d&&!/^\d{4}-\d{2}-\d{2}$/.test(d))return alert('Use o formato AAAA-MM-DD.');
+  billRecords[key]={...rec,paid:true,paidDate:d||new Date().toISOString().slice(0,10),payment:rec.payment||b?.payment||'Pix'};
+ }else{
+  if(!confirm('Deseja voltar esta conta para pendente?'))return;
+  billRecords[key]={...rec,paid:false,paidDate:''};
+ }
+ saveBills();render();
+}
+function adjustBillAmount(id,month){
+ const b=billsForMonth(month).find(x=>x.id===id);if(!b)return;
+ const raw=prompt(`Novo valor de ${b.name} para este mês (R$):`,String(b.amount).replace('.',','));
+ if(raw===null)return;
+ const value=Number(raw.replace(',','.'));
+ if(!Number.isFinite(value)||value<=0)return alert('Informe um valor válido.');
+ const key=billRecordKey(id,month);billRecords[key]={...(billRecords[key]||{}),amountOverride:value};
+ saveBills();render();
+}
+function saveSalaryDay(){
+ prefs.salaryDay=Number(document.getElementById('salaryDay').value)||25;saveBills();render();
+}
+
 function iconFor(c){return ({'Alimentação':'🛒','Moradia':'⌂','Transporte':'🚗','Saúde':'＋','Educação':'▤','Lazer':'♫','Compras':'◇','Contas':'▣','Cartão de crédito':'▤','Salário':'$','Renda extra':'↗','Investimentos':'◈'})[c]||'•'}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.getElementById(v+'View').classList.add('active');document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.getElementById('addBtn').style.display=v==='settings'?'none':'block';}
+function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.getElementById(v+'View').classList.add('active');document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.getElementById('addBtn').style.display=(v==='settings'||v==='bills')?'none':'block';if(v==='bills')renderBills();}
 document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 function updateCats(){document.getElementById('category').innerHTML=cats[type].map(c=>`<option>${c}</option>`).join('')}
 function updateCardField(){document.getElementById('cardField').style.display=document.getElementById('payment').value==='Crédito'?'block':'none'}
@@ -152,10 +301,12 @@ function removeEntry(id){if(confirm('Excluir este lançamento?')){entries=entrie
 document.getElementById('prevMonth').onclick=()=>{current.setMonth(current.getMonth()-1);render()};
 document.getElementById('nextMonth').onclick=()=>{current.setMonth(current.getMonth()+1);render()};
 function download(name,blob){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-function backupData(){download('backup-financas-casal.json',new Blob([JSON.stringify({app:'Finanças do Casal',version:1,entries},null,2)],{type:'application/json'}))}
-function restoreData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);const arr=Array.isArray(d)?d:d.entries;if(!Array.isArray(arr))throw Error();if(confirm('Importar backup? Os lançamentos atuais serão substituídos.')){entries=arr;save();alert('Backup restaurado!')}}catch(err){alert('Não foi possível ler esse backup.')}e.target.value=''};r.readAsText(f)}
-function exportCSV(){const rows=[['Data','Tipo','Descrição','Categoria','Pagamento','Valor'],...entries.map(x=>[x.date,x.type==='income'?'Receita':'Despesa',x.description,x.category,x.payment,x.amount])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');download('financas-casal.csv',new Blob([csv],{type:'text/csv;charset=utf-8'}))}
-function clearData(){if(confirm('Tem certeza? Recomendamos exportar um backup antes.')){if(confirm('Confirma apagar todos os lançamentos?')){entries=[];save()}}}
+function backupData(){download('backup-financas-casal.json',new Blob([JSON.stringify({app:'Finanças do Casal',version:2,entries,billTemplates,billRecords,prefs},null,2)],{type:'application/json'}))}
+function restoreData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);const arr=Array.isArray(d)?d:d.entries;if(!Array.isArray(arr))throw Error();if(confirm('Importar backup? Os lançamentos e as contas fixas atuais serão substituídos.')){entries=arr;billTemplates=Array.isArray(d.billTemplates)?d.billTemplates:[];billRecords=d.billRecords&&typeof d.billRecords==='object'?d.billRecords:{};prefs=d.prefs||{salaryDay:25};localStorage.setItem(KEY,JSON.stringify(entries));saveBills();render();alert('Backup restaurado!')}}catch(err){alert('Não foi possível ler esse backup.')}e.target.value=''};r.readAsText(f)}
+function exportCSV(){const month=monthKey(current);const fixed=billsForMonth(month).map(b=>[b.dueDate,'Conta fixa',b.name,b.category,b.record.payment||b.payment,b.amount,b.paid?'Paga':'Pendente']);const rows=[['Data','Tipo','Descrição','Categoria','Pagamento','Valor','Situação'],...entries.map(x=>[x.date,x.type==='income'?'Receita':'Despesa',x.description,x.category,x.payment,x.amount,'Lançado']),...fixed];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');download('financas-casal.csv',new Blob([csv],{type:'text/csv;charset=utf-8'}))}
+function clearData(){if(confirm('Tem certeza? Recomendamos exportar um backup antes.')){if(confirm('Confirma apagar todos os lançamentos e contas fixas?')){entries=[];billTemplates=[];billRecords={};prefs={salaryDay:25};localStorage.setItem(KEY,JSON.stringify(entries));saveBills();render()}}}
+document.getElementById('salaryDay').value=String(prefs.salaryDay||25);
+document.getElementById('billCategory').innerHTML=cats.expense.map(c=>`<option>${esc(c)}</option>`).join('');
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 render();
 </script>
